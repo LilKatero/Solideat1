@@ -1,0 +1,3 @@
+ID;SIRET;Nom de l'établissement;Adresse de l'établissement;Complément d'adresse;Code postal;Commune;Type d'établissement;Téléphone;Adresse électronique;Spécialité culinaire;Horaires d'ouverture et de fermeture de l'établissement;Accueil des personnes à mobilité réduite;Site web de l'établissement;geo
+1;12345678900001;Resto Solidaire Alpha;10 rue de Paris;;75001;Paris;Association;;alpha@exemple.fr;Française;Lundi-Vendredi 12h-14h;Oui;www.alpha.org;"48.8566,2.3522"
+2;98765432100002;Resto Solidaire Beta;5 avenue de Lyon;;69001;Lyon;Centre social;;beta@exemple.fr;Internationale;Tous les jours 11h-15h;Non;www.beta.org;"45.7640,4.8357"
