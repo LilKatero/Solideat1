@@ -2,11 +2,10 @@ const express = require('express');
 const fs = require('fs');
 const csv = require('csv-parser');
 const fetch = require('node-fetch');
-const cors = require('cors'); // 👈 Ajouté
+const cors = require('cors'); // ✅ Ajouté
 
 const app = express();
-app.use(cors()); // 👈 Ajouté
-
+app.use(cors()); // ✅ Ajouté
 
 app.get('/api/restos', (req, res) => {
   const results = [];
