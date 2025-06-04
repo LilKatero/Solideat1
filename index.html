@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Carte des Restos Solidaires</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style> #map { height: 100vh; } </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([48.85, 2.35], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    fetch('https://ton-backend.onrender.com/api/restos')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(r => {
+          if (r.lat && r.lon) {
+            L.marker([r.lat, r.lon])
+              .addTo(map)
+              .bindPopup(`<strong>${r.nom}</strong><br>${r.adresse}<br>${r.commune}`);
+          }
+        });
+      });
+  </script>
+</body>
+</html>
