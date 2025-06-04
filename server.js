@@ -1,12 +1,12 @@
-
 const express = require('express');
 const fs = require('fs');
-const path = require('path');
 const csv = require('csv-parser');
-const app = express();
-const PORT = process.env.PORT || 3000;
+const fetch = require('node-fetch');
+const cors = require('cors'); // 👈 Ajouté
 
-app.use(express.static(path.join(__dirname, 'public')));
+const app = express();
+app.use(cors()); // 👈 Ajouté
+
 
 app.get('/api/restos', (req, res) => {
   const results = [];
@@ -27,3 +27,4 @@ app.get('/api/restos', (req, res) => {
 });
 
 app.listen(PORT, () => console.log(`Serveur lancé sur http://localhost:${PORT}`));
+
