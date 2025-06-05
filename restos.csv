@@ -1,3 +1,0 @@
-ID;SIRET;Nom de l'établissement;Adresse de l'établissement;Complément d'adresse;Code postal;Commune;Type d'établissement;Téléphone;Adresse électronique;Spécialité culinaire;Horaires d'ouverture et de fermeture de l'établissement;Accueil des personnes à mobilité réduite;Site web de l'établissement;geo
-1;12345678900011;Solidarité Resto;10 rue des Lilas;;75020;Paris;Association;0123456789;contact@solidariteresto.fr;Cuisine française;Lun-Ven: 12h-14h;Oui;www.solidariteresto.fr;"48.8698,2.3935"
-2;98765432100022;Cœur Nourricier;25 avenue Victor Hugo;;69003;Lyon;Collectivité;0987654321;contact@coeurnourricier.fr;Cuisine du monde;Mar-Sam: 11h-15h;Oui;www.coeurnourricier.fr;"45.7578,4.8594"
