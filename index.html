@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Carte des restaurants</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Leaflet MarkerCluster CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+  />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 10px;
+    }
+    #map {
+      height: 600px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    label {
+      font-weight: bold;
+    }
+    .controls {
+      margin-bottom: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+    input[type="text"], select {
+      padding: 6px;
+      font-size: 1rem;
+      min-width: 200px;
+    }
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      input[type="text"], select {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Carte des restaurants</h1>
+
+  <div class="controls">
+    <label for="searchInput">Rechercher (nom ou adresse) :</label>
+    <input type="text" id="searchInput" placeholder="Ex : Solidarité, Paris..." />
+
+    <label for="filterSpecialite">Filtrer par spécialité :</label>
+    <select id="filterSpecialite">
+      <option value="">-- Toutes --</option>
+      <!-- options dynamiques insérées ici -->
+    </select>
+  </div>
+
+<h2>Ajouter un restaurant</h2>
+<form id="addRestoForm" style="margin-bottom:20px;">
+  <input type="text" id="nom" placeholder="Nom de l'établissement" required />
+  <input type="text" id="adresse" placeholder="Adresse" required />
+  <input type="text" id="codePostal" placeholder="Code postal" required pattern="\\d{5}" title="5 chiffres" />
+  <input type="text" id="commune" placeholder="Commune" required />
+  <input type="text" id="telephone" placeholder="Téléphone" />
+  <input type="text" id="specialite" placeholder="Spécialité culinaire" />
+  <input type="text" id="horaires" placeholder="Horaires d'ouverture" />
+  <select id="pmr" required>
+    <option value="">Accueil PMR ?</option>
+    <option value="Oui">Oui</option>
+    <option value="Non">Non</option>
+  </select>
+  <input type="text" id="siteWeb" placeholder="Site web" />
+  <input type="text" id="geo" placeholder="Coordonnées lat,lon (ex: 48.8566,2.3522)" pattern="^-?\\d+\\.?\\d*,\\s*-?\\d+\\.?\\d*$" title="lat,lon" required />
+  <button type="submit">Ajouter</button>
+</form>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    const map = L.map('map').setView([46.6, 2.4], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    let markers = L.markerClusterGroup();
+
+    // Données brutes chargées du JSON
+    let restaurants = [];
+    // Liste filtrée et affichée
+    let displayedRestaurants = [];
+
+    // Éléments DOM
+    const searchInput = document.getElementById('searchInput');
+    const filterSpecialite = document.getElementById('filterSpecialite');
+
+    // Fonction pour créer popup HTML propre
+    function createPopup(resto) {
+      const siteWeb = resto['Site web de l\'établissement'] ? `<br/><a href="http://${resto['Site web de l\'établissement']}" target="_blank" rel="noopener noreferrer">Site web</a>` : '';
+      const horaires = resto['Horaires d\'ouverture et de fermeture de l\'établissement'] || 'Non renseigné';
+      const pmr = resto['Accueil des personnes à mobilité réduite'] || 'Non renseigné';
+      const tel = resto['Téléphone'] || 'Non renseigné';
+
+      return `<b>${resto['Nom de l\'établissement']}</b><br/>
+              Adresse: ${resto['Adresse de l\'établissement']}, ${resto['Code postal']} ${resto['Commune']}<br/>
+              Téléphone: ${tel}<br/>
+              Spécialité: ${resto['Spécialité culinaire']}<br/>
+              Horaires: ${horaires}<br/>
+              PMR: ${pmr}
+              ${siteWeb}`;
+    }
+
+    // Fonction pour afficher les marqueurs selon la liste
+    function showMarkers(restos) {
+      markers.clearLayers();
+
+      restos.forEach(resto => {
+        const coords = resto.geo.split(',').map(Number);
+        const marker = L.marker(coords);
+        marker.bindPopup(createPopup(resto));
+        markers.addLayer(marker);
+      });
+
+      map.addLayer(markers);
+    }
+
+    // Fonction pour extraire toutes les spécialités uniques
+    function extractSpecialites(data) {
+      const set = new Set();
+      data.forEach(r => {
+        if (r['Spécialité culinaire']) {
+          set.add(r['Spécialité culinaire']);
+        }
+      });
+      return Array.from(set).sort();
+    }
+
+    // Filtrage selon recherche et spécialité
+    function filterRestaurants() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const specialiteFilter = filterSpecialite.value;
+
+      displayedRestaurants = restaurants.filter(r => {
+        const matchSearch =
+          r['Nom de l\'établissement'].toLowerCase().includes(searchTerm) ||
+          r['Adresse de l\'établissement'].toLowerCase().includes(searchTerm) ||
+          r['Commune'].toLowerCase().includes(searchTerm) ||
+          r['Code postal'].includes(searchTerm);
+
+        const matchSpecialite = specialiteFilter === '' || r['Spécialité culinaire'] === specialiteFilter;
+
+        return matchSearch && matchSpecialite;
+      });
+
+      showMarkers(displayedRestaurants);
+    }
+const form = document.getElementById('addRestoForm');
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+
+  // Récupération des valeurs
+  const nouveauResto = {
+    "Nom de l'établissement": form.nom.value.trim(),
+    "Adresse de l'établissement": form.adresse.value.trim(),
+    "Code postal": form.codePostal.value.trim(),
+    "Commune": form.commune.value.trim(),
+    "Téléphone": form.telephone.value.trim(),
+    "Spécialité culinaire": form.specialite.value.trim(),
+    "Horaires d'ouverture et de fermeture de l'établissement": form.horaires.value.trim(),
+    "Accueil des personnes à mobilité réduite": form.pmr.value,
+    "Site web de l'établissement": form.siteWeb.value.trim(),
+    "geo": form.geo.value.trim()
+  };
+
+  // Ajout à la liste et mise à jour de la carte
+  restaurants.push(nouveauResto);
+  filterRestaurants();
+
+  // Reset du formulaire
+  form.reset();
+
+  // Optionnel: téléchargement du JSON mis à jour
+  const jsonStr = JSON.stringify(restaurants, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const dlLink = document.createElement('a');
+  dlLink.href = url;
+  dlLink.download = "restaurants-mis-a-jour.json";
+  dlLink.textContent = "Télécharger le JSON mis à jour";
+  dlLink.style.display = "inline-block";
+  dlLink.style.marginTop = "10px";
+
+  // Supprime ancien lien s'il existe
+  const oldLink = document.getElementById('dlJsonLink');
+  if (oldLink) oldLink.remove();
+  dlLink.id = 'dlJsonLink';
+
+  form.parentNode.insertBefore(dlLink, form.nextSibling);
+});
+
+
+    // Chargement du JSON
+    fetch('restaurants.json')
+      .then(res => res.json())
+      .then(data => {
+        restaurants = data;
+
+        // Remplir la liste déroulante spécialité
+        const specialites = extractSpecialites(restaurants);
+        specialites.forEach(sp => {
+          const opt = document.createElement('option');
+          opt.value = sp;
+          opt.textContent = sp;
+          filterSpecialite.appendChild(opt);
+        });
+
+        // Afficher tous au départ
+        displayedRestaurants = restaurants;
+        showMarkers(displayedRestaurants);
+      })
+      .catch(err => {
+        alert('Erreur chargement restaurants.json, vérifier que le fichier est bien accessible.');
+        console.error(err);
+      });
+
+    // Événements de filtre et recherche
+    searchInput.addEventListener('input', filterRestaurants);
+    filterSpecialite.addEventListener('change', filterRestaurants);
+  </script>
+</body>
+</html>
