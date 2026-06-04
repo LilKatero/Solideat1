@@ -4,7 +4,7 @@ session_start();
 $error = "";
 
 $admin_user = "admin";
-$admin_pass = "admin123"; // 🔐 ton mot de passe fixe
+$admin_pass = "admin123"; 
 
 if (isset($_POST['login'])) {
 
